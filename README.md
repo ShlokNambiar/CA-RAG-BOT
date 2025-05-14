@@ -1,6 +1,6 @@
-# RAG Pipeline for UDCPR Document
+# UDCPR RAG Chatbot
 
-This project implements a Retrieval-Augmented Generation (RAG) pipeline for processing the UDCPR document. The pipeline extracts text from the PDF, chunks it into manageable pieces, generates embeddings, and stores them in a vector database for semantic search.
+This project implements a Retrieval-Augmented Generation (RAG) chatbot for the Unified Development Control and Promotion Regulations (UDCPR) document for Maharashtra State, India. The pipeline extracts text from the PDF, chunks it into manageable pieces, generates embeddings, and stores them in a vector database for semantic search. A Streamlit web interface allows users to ask questions about the UDCPR regulations and get accurate answers.
 
 ## Features
 
@@ -10,6 +10,9 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline for proc
 - **Vector Database Storage**: Uses Pinecone for efficient vector search
 - **Checkpointing**: Supports resuming from checkpoints for long-running processes
 - **Query Interface**: Simple interface for semantic search
+- **Streamlit Web App**: User-friendly web interface for asking questions about UDCPR
+- **OpenAI GPT-4o Integration**: Provides accurate, context-aware responses
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## Requirements
 
@@ -28,13 +31,23 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline for proc
 
 ## Usage
 
-### Running the Full Pipeline
+### Streamlit Web App
+
+The easiest way to use this project is through the Streamlit web app:
+
+1. Visit the deployed app at: [UDCPR Chatbot on Streamlit](https://udcpr-rag.streamlit.app/)
+2. Type your question about UDCPR regulations in the chat input
+3. Get an AI-generated response based on the UDCPR document
+
+### Running the Full Pipeline Locally
+
+If you want to run the data processing pipeline locally:
 
 ```bash
 python main.py --pdf "UDCPR Updated 30.01.25 with earlier provisions & corrections.pdf"
 ```
 
-### Running Individual Steps
+### Running Individual Steps Locally
 
 ```bash
 # Extract text from PDF
@@ -50,7 +63,7 @@ python embeddings_generator.py output/udcpr_chunked.json -o output/udcpr_embeddi
 python pinecone_uploader.py output/udcpr_embeddings.json -c output/upload_checkpoint.json
 ```
 
-### Querying the RAG System
+### Querying the RAG System Locally
 
 ```bash
 # Interactive query mode
@@ -58,6 +71,12 @@ python main.py --query
 
 # Single query
 python query_interface.py "What are the building height regulations?"
+```
+
+### Running the Streamlit App Locally
+
+```bash
+streamlit run udcpr_chatbot_streamlit.py
 ```
 
 ## Pipeline Components
@@ -75,6 +94,31 @@ python query_interface.py "What are the building height regulations?"
 - **Token Calculation**: Validates token counts before API calls
 - **Checkpointing**: Saves progress to resume long-running processes
 - **Error Recovery**: Handles errors gracefully with progress saving
+
+## Streamlit Deployment
+
+This project is deployed on Streamlit Cloud. The deployment uses:
+
+- **Streamlit Secrets**: For securely storing API keys
+- **Pinecone Vector Database**: For storing and retrieving document embeddings
+- **OpenAI API**: For generating embeddings and chat completions
+- **Responsive UI**: For a good user experience on all devices
+
+To deploy your own version:
+
+1. Fork this repository
+2. Create a Streamlit account at [streamlit.io](https://streamlit.io)
+3. Create a new app and connect it to your forked repository
+4. Add your API keys to Streamlit secrets with the following structure:
+   ```
+   [general]
+   OPENAI_API_KEY = "your-openai-api-key"
+   PINECONE_API_KEY = "your-pinecone-api-key"
+   PINECONE_ENVIRONMENT = "your-pinecone-environment"
+   SUPABASE_URL = "your-supabase-url"
+   SUPABASE_API_KEY = "your-supabase-api-key"
+   ENABLE_WEB_SEARCH = "true"
+   ```
 
 ## License
 
