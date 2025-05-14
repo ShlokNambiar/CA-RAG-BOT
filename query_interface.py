@@ -12,14 +12,37 @@ import openai
 import pinecone
 from dotenv import load_dotenv
 
-# Load environment variables
+# Try to import streamlit for secrets
+try:
+    import streamlit as st
+    STREAMLIT_AVAILABLE = True
+except ImportError:
+    STREAMLIT_AVAILABLE = False
+
+# Load environment variables from .env file (local development)
 load_dotenv()
 
+# Try to get API keys from Streamlit secrets first, then fall back to environment variables
+def get_env_var(var_name):
+    """Get environment variable from Streamlit secrets or os.environ"""
+    if STREAMLIT_AVAILABLE and hasattr(st, "secrets") and "general" in st.secrets:
+        return st.secrets["general"].get(var_name) or os.getenv(var_name)
+    return os.getenv(var_name)
+
 # Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = get_env_var("OPENAI_API_KEY")
+if openai_api_key:
+    openai.api_key = openai_api_key
+    os.environ["OPENAI_API_KEY"] = openai_api_key
 
 # Pinecone constants
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_API_KEY = get_env_var("PINECONE_API_KEY")
+PINECONE_ENVIRONMENT = get_env_var("PINECONE_ENVIRONMENT")
+if PINECONE_API_KEY:
+    os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
+if PINECONE_ENVIRONMENT:
+    os.environ["PINECONE_ENVIRONMENT"] = PINECONE_ENVIRONMENT
+
 INDEX_NAME = "udcpr-rag-index"
 
 # OpenAI constants
@@ -30,19 +53,30 @@ EMBEDDING_DIMENSIONS = 1024
 def initialize_pinecone():
     """Initialize Pinecone client and return the index."""
     if not PINECONE_API_KEY:
-        raise ValueError("Pinecone API key not set. Check your .env file.")
+        if STREAMLIT_AVAILABLE and hasattr(st, "secrets"):
+            if "general" not in st.secrets:
+                raise ValueError("Pinecone API key not set. Make sure you have a 'general' section in your Streamlit secrets.")
+            elif "PINECONE_API_KEY" not in st.secrets["general"]:
+                raise ValueError("Pinecone API key not set. Add PINECONE_API_KEY to the 'general' section in your Streamlit secrets.")
+        else:
+            raise ValueError("Pinecone API key not set. Check your .env file or Streamlit secrets.")
 
-    # Initialize Pinecone
-    pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
+    try:
+        # Initialize Pinecone
+        pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
 
-    # Connect to the index
-    index_list = [index.name for index in pc.list_indexes()]
-    if INDEX_NAME not in index_list:
-        raise ValueError(f"Index {INDEX_NAME} does not exist. Run the uploader first.")
+        # Connect to the index
+        index_list = [index.name for index in pc.list_indexes()]
+        if INDEX_NAME not in index_list:
+            raise ValueError(f"Index {INDEX_NAME} does not exist. Run the uploader first.")
 
-    # Connect to the index
-    index = pc.Index(INDEX_NAME)
-    return index
+        # Connect to the index
+        index = pc.Index(INDEX_NAME)
+        return index
+    except Exception as e:
+        if STREAMLIT_AVAILABLE:
+            st.error(f"Error initializing Pinecone: {str(e)}")
+        raise ValueError(f"Failed to initialize Pinecone: {str(e)}")
 
 
 def get_query_embedding(query: str) -> List[float]:
