@@ -11,14 +11,66 @@ import traceback
 import sys
 
 # First, check if environment variables are properly set
-env_vars = {
-    "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
-    "PINECONE_API_KEY": os.getenv("PINECONE_API_KEY"),
-    "PINECONE_ENVIRONMENT": os.getenv("PINECONE_ENVIRONMENT"),
-    "SUPABASE_URL": os.getenv("SUPABASE_URL"),
-    "SUPABASE_API_KEY": os.getenv("SUPABASE_API_KEY"),
-    "ENABLE_WEB_SEARCH": os.getenv("ENABLE_WEB_SEARCH")
-}
+# Try to load from Streamlit secrets first, then fall back to environment variables
+env_vars = {}
+
+# Load from Streamlit secrets
+try:
+    # First, let's see what's in the secrets
+    st.write("### Streamlit Secrets Structure:")
+    if hasattr(st, "secrets"):
+        st.write("Secrets object exists")
+        if "general" in st.secrets:
+            st.write("'general' section exists in secrets")
+            # List all keys in the general section (without values)
+            st.write("Keys in 'general' section:")
+            for key in st.secrets["general"]:
+                st.write(f"- {key}")
+        else:
+            st.write("'general' section does not exist in secrets")
+            # Show what sections do exist
+            st.write("Available sections:")
+            for section in st.secrets:
+                st.write(f"- {section}")
+    else:
+        st.write("No secrets object found in Streamlit")
+
+    # Now try to load the secrets
+    env_vars["OPENAI_API_KEY"] = st.secrets["general"]["OPENAI_API_KEY"]
+    env_vars["PINECONE_API_KEY"] = st.secrets["general"]["PINECONE_API_KEY"]
+    env_vars["PINECONE_ENVIRONMENT"] = st.secrets["general"]["PINECONE_ENVIRONMENT"]
+    env_vars["SUPABASE_URL"] = st.secrets["general"]["SUPABASE_URL"]
+    env_vars["SUPABASE_API_KEY"] = st.secrets["general"]["SUPABASE_API_KEY"]
+    env_vars["ENABLE_WEB_SEARCH"] = st.secrets["general"]["ENABLE_WEB_SEARCH"]
+
+    # Set environment variables for other modules that use os.getenv()
+    os.environ["OPENAI_API_KEY"] = env_vars["OPENAI_API_KEY"]
+    os.environ["PINECONE_API_KEY"] = env_vars["PINECONE_API_KEY"]
+    os.environ["PINECONE_ENVIRONMENT"] = env_vars["PINECONE_ENVIRONMENT"]
+    os.environ["SUPABASE_URL"] = env_vars["SUPABASE_URL"]
+    os.environ["SUPABASE_API_KEY"] = env_vars["SUPABASE_API_KEY"]
+    os.environ["ENABLE_WEB_SEARCH"] = env_vars["ENABLE_WEB_SEARCH"]
+
+    st.success("Successfully loaded secrets from Streamlit!")
+
+    # Display the keys that were loaded (without showing the actual values)
+    st.write("### Loaded Keys:")
+    for key in env_vars:
+        if env_vars[key]:
+            st.write(f"- {key}: ✅ Present")
+        else:
+            st.write(f"- {key}: ❌ Missing")
+except Exception as e:
+    st.error(f"Error loading secrets from Streamlit: {str(e)}")
+    st.write("Falling back to environment variables...")
+
+    # Fall back to environment variables
+    env_vars["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    env_vars["PINECONE_API_KEY"] = os.getenv("PINECONE_API_KEY")
+    env_vars["PINECONE_ENVIRONMENT"] = os.getenv("PINECONE_ENVIRONMENT")
+    env_vars["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
+    env_vars["SUPABASE_API_KEY"] = os.getenv("SUPABASE_API_KEY")
+    env_vars["ENABLE_WEB_SEARCH"] = os.getenv("ENABLE_WEB_SEARCH")
 
 # Import the main app with error handling
 try:
