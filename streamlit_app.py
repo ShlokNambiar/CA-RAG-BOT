@@ -34,18 +34,17 @@ try:
         st.stop()
 
     # Initialize Pinecone
-    if env_vars["PINECONE_API_KEY"] and env_vars["PINECONE_ENVIRONMENT"]:
+    if env_vars["PINECONE_API_KEY"]:
         try:
-            pinecone.init(
-                api_key=env_vars["PINECONE_API_KEY"],
-                environment=env_vars["PINECONE_ENVIRONMENT"]
-            )
+            # Use the newer Pinecone initialization method
+            pinecone.Pinecone(api_key=env_vars["PINECONE_API_KEY"])
+            # No need to store the client as it will be initialized again in query_interface.py
         except Exception as e:
             st.error(f"Failed to initialize Pinecone: {str(e)}")
             st.code(traceback.format_exc())
             st.stop()
     else:
-        st.error("Pinecone API key or environment is missing. Please add them to your Streamlit secrets.")
+        st.error("Pinecone API key is missing. Please add it to your Streamlit secrets.")
         st.stop()
 
     # Now import the main app
