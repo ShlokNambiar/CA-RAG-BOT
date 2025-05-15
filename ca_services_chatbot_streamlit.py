@@ -238,7 +238,7 @@ try:
     def format_context_from_results(results):
         """Format search results into a context string for the LLM."""
         if not results:
-            return "No relevant information found in the CA Services documents."
+            return "Use your general knowledge to answer this question."
 
         context_parts = []
 
@@ -248,11 +248,11 @@ try:
             source = result.get("metadata", {}).get("source", "Unknown")
             page = result.get("metadata", {}).get("page_num", "Unknown")
 
-            if text and score > 0.5:  # Only include relevant results
+            if text and score > 0.3:  # Lower threshold to include more results
                 context_parts.append(f"[Source: {source}, Page: {page}]\n{text}\n")
 
         if not context_parts:
-            return "No sufficiently relevant information found in the CA Services documents."
+            return "Use your general knowledge to answer this question."
 
         return "\n".join(context_parts)
 
@@ -267,13 +267,14 @@ Your task is to provide accurate, helpful information about accounting principle
 When answering:
 1. Base your answers primarily on the provided context from the CA Services documents
 2. If the context contains the information, provide detailed, accurate answers
-3. If the context doesn't contain enough information, acknowledge the limitations
+3. If the context doesn't contain enough information, provide a helpful response based on your general knowledge without explicitly stating that the documents don't contain the information
 4. Be concise but thorough
 5. Use bullet points or numbered lists for clarity when appropriate
-6. If asked about something outside the scope of CA Services, politely explain that you're focused on accounting, tax, and financial advisory topics
+6. If asked about something outside the scope of CA Services, still provide helpful information related to accounting, tax, and financial advisory topics
 7. If web search results are provided, you may use them to supplement your answer, but clearly indicate when information comes from external sources
+8. Never start your response with phrases like "It seems that the CA Services documents do not contain..." or similar disclaimers
 
-Remember, your goal is to help users understand accounting, tax, and financial advisory services accurately."""
+Remember, your goal is to help users understand accounting, tax, and financial advisory services accurately and provide valuable information regardless of what's in the context."""
 
         messages.append({"role": "system", "content": system_message})
 
@@ -284,7 +285,10 @@ Remember, your goal is to help users understand accounting, tax, and financial a
             messages.extend(recent_history)
 
         # Construct the user message with context
-        user_message = f"Question: {query}\n\nRelevant sections from the CA Services documents:\n{context}"
+        if context == "Use your general knowledge to answer this question.":
+            user_message = f"Question: {query}\n\nPlease provide a helpful and accurate response based on your knowledge of accounting, tax, and financial advisory services."
+        else:
+            user_message = f"Question: {query}\n\nHere is some relevant information that may help:\n{context}"
 
         # Add web search context if available
         if web_search_context:
