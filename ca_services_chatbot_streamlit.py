@@ -11,7 +11,9 @@ import sys
 import traceback
 import time
 import openai
+import uuid
 from datetime import datetime
+from supabase import create_client, Client
 
 # IMPORTANT: Set page config first before any other Streamlit commands
 st.set_page_config(
@@ -189,6 +191,58 @@ try:
         st.code(traceback.format_exc())
         st.stop()
 
+    # Initialize Supabase
+    try:
+        # Check if Supabase credentials are available
+        if not env_vars.get("SUPABASE_URL") or not env_vars.get("SUPABASE_API_KEY"):
+            st.warning("Supabase credentials are missing. Chat history will not be saved to the database.")
+            supabase_client = None
+        else:
+            # Initialize Supabase client
+            supabase_url = env_vars["SUPABASE_URL"]
+            supabase_key = env_vars["SUPABASE_API_KEY"]
+            supabase_client = create_client(supabase_url, supabase_key)
+            st.success("Successfully connected to Supabase!")
+
+            # Initialize session ID if not already set
+            if "session_id" not in st.session_state:
+                st.session_state.session_id = str(uuid.uuid4())
+
+            # Function to save message to Supabase
+            def save_message_to_supabase(role, content):
+                """Save a message to the Supabase chat_messages table."""
+                if supabase_client:
+                    try:
+                        message_data = {
+                            "session_id": st.session_state.session_id,
+                            "role": role,
+                            "content": content,
+                            "created_at": datetime.now().isoformat()
+                        }
+                        supabase_client.table("chat_messages").insert(message_data).execute()
+                    except Exception as e:
+                        st.error(f"Failed to save message to Supabase: {str(e)}")
+
+            # Function to save chat memory to Supabase
+            def save_memory_to_supabase(query, response):
+                """Save a chat memory to the Supabase chat_memories table."""
+                if supabase_client:
+                    try:
+                        memory_data = {
+                            "session_id": st.session_state.session_id,
+                            "query": query,
+                            "response": response,
+                            "created_at": datetime.now().isoformat()
+                        }
+                        supabase_client.table("chat_memories").insert(memory_data).execute()
+                    except Exception as e:
+                        st.error(f"Failed to save memory to Supabase: {str(e)}")
+
+    except Exception as e:
+        st.error(f"Failed to initialize Supabase: {str(e)}")
+        st.code(traceback.format_exc())
+        supabase_client = None
+
     # App description
     st.markdown("""
     This chatbot uses Retrieval Augmented Generation (RAG) to provide accurate information about
@@ -242,7 +296,7 @@ try:
 
         context_parts = []
 
-        for i, result in enumerate(results):
+        for result in results:
             score = result.get("score", 0)
             text = result.get("metadata", {}).get("text", "")
             source = result.get("metadata", {}).get("source", "Unknown")
@@ -354,6 +408,15 @@ Remember, your goal is to help users understand accounting, tax, and financial a
                 # Add assistant message to display history
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
 
+                # Save to Supabase if client is initialized
+                if 'supabase_client' in locals() and supabase_client:
+                    # Save individual messages
+                    save_message_to_supabase("user", prompt)
+                    save_message_to_supabase("assistant", full_response)
+
+                    # Save as a memory pair
+                    save_memory_to_supabase(prompt, full_response)
+
             except Exception as e:
                 message_placeholder.markdown(f"Error: {str(e)}")
                 st.error(traceback.format_exc())
@@ -366,6 +429,11 @@ Remember, your goal is to help users understand accounting, tax, and financial a
         # Reset all conversation state
         st.session_state.chat_history = []
         st.session_state.messages = []
+
+        # Generate a new session ID for Supabase
+        if "session_id" in st.session_state:
+            st.session_state.session_id = str(uuid.uuid4())
+
         st.experimental_rerun()
 
     # Footer
