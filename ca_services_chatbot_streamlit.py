@@ -168,7 +168,7 @@ try:
         pc = pinecone.Pinecone(api_key=env_vars["PINECONE_API_KEY"])
 
         # Constants
-        INDEX_NAME = "ca-services-rag-index"
+        INDEX_NAME = "udcpr-rag-index"  # Using the existing index which contains both UDCPR and CA Services data
         EMBEDDING_MODEL = "text-embedding-3-small"
         EMBEDDING_DIMENSIONS = 1024
         MODEL = "gpt-4o"
