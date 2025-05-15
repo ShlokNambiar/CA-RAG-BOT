@@ -201,45 +201,8 @@ try:
             # Initialize Supabase client
             supabase_url = env_vars["SUPABASE_URL"]
             supabase_key = env_vars["SUPABASE_API_KEY"]
-
-            try:
-                # Try the standard initialization first
-                supabase_client = create_client(supabase_url, supabase_key)
-                st.success("Successfully connected to Supabase!")
-            except Exception as e:
-                st.warning(f"Standard Supabase initialization failed: {str(e)}")
-
-                # Set up a simple dictionary-based mock client for storing messages
-                # This will store messages in memory during the session
-                st.warning("Using in-memory storage for chat history instead of Supabase")
-
-                class MockSupabaseClient:
-                    def __init__(self):
-                        self.tables = {
-                            "chat_messages": [],
-                            "chat_memories": []
-                        }
-
-                    def table(self, table_name):
-                        return MockSupabaseTable(self.tables.get(table_name, []))
-
-                class MockSupabaseTable:
-                    def __init__(self, data):
-                        self.data = data
-                        self.current_record = None
-
-                    def insert(self, record):
-                        self.current_record = record
-                        return self
-
-                    def execute(self):
-                        if self.current_record:
-                            self.data.append(self.current_record)
-                            return {"data": self.current_record}
-                        return {"data": None}
-
-                supabase_client = MockSupabaseClient()
-                st.info("Using in-memory storage for chat history. Data will not persist between sessions.")
+            supabase_client = create_client(supabase_url, supabase_key)
+            st.success("Successfully connected to Supabase!")
 
             # Initialize session ID if not already set
             if "session_id" not in st.session_state:
