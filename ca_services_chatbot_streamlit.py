@@ -168,7 +168,7 @@ try:
         pc = pinecone.Pinecone(api_key=env_vars["PINECONE_API_KEY"])
 
         # Constants
-        INDEX_NAME = "udcpr-rag-index"  # Using the existing index which contains both UDCPR and CA Services data
+        INDEX_NAME = "new-rag-index"  # Updated to use the new Pinecone index
         EMBEDDING_MODEL = "text-embedding-3-small"
         EMBEDDING_DIMENSIONS = 1024
         MODEL = "gpt-4o"
@@ -242,7 +242,7 @@ try:
 
         context_parts = []
 
-        for i, result in enumerate(results):
+        for result in results:
             score = result.get("score", 0)
             text = result.get("metadata", {}).get("text", "")
             source = result.get("metadata", {}).get("source", "Unknown")

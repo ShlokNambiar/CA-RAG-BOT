@@ -43,7 +43,7 @@ if PINECONE_API_KEY:
 if PINECONE_ENVIRONMENT:
     os.environ["PINECONE_ENVIRONMENT"] = PINECONE_ENVIRONMENT
 
-INDEX_NAME = "udcpr-rag-index"
+INDEX_NAME = "new-rag-index"
 
 # OpenAI constants
 EMBEDDING_MODEL = "text-embedding-3-small"
