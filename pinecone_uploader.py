@@ -19,7 +19,7 @@ load_dotenv()
 # Pinecone constants
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = "new-rag-index"
-VECTOR_DIMENSION = 1024
+VECTOR_DIMENSION = 1536  # Updated to match the dimension of the index
 BATCH_SIZE = 100  # Number of vectors to upsert in one batch
 
 

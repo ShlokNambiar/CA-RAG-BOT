@@ -170,7 +170,7 @@ try:
         # Constants
         INDEX_NAME = "new-rag-index"  # Updated to use the new Pinecone index
         EMBEDDING_MODEL = "text-embedding-3-small"
-        EMBEDDING_DIMENSIONS = 1024
+        EMBEDDING_DIMENSIONS = 1536  # Updated to match the dimension of the index
         MODEL = "gpt-4o"
         MAX_HISTORY_MESSAGES = 10
         TOP_K_RESULTS = 5

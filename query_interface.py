@@ -47,7 +47,7 @@ INDEX_NAME = "new-rag-index"
 
 # OpenAI constants
 EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1024
+EMBEDDING_DIMENSIONS = 1536  # Updated to match the dimension of the index
 
 
 def initialize_pinecone():
